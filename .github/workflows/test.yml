@@ -1,0 +1,28 @@
+name: test
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: npm ci
+
+      # No API key, deliberately. The loop runs against an injected client, so
+      # the suite can never fail for a reason unrelated to the code.
+      - run: npm test
+
+      # The declarations are the product. Building them is the only way to find
+      # out whether the types a consumer gets are the types I think they get.
+      - run: npm run build
+
+      # And the example typechecks against those built declarations rather than
+      # against src/, because that is what someone installing this actually sees.
+      - run: npm run typecheck:example
