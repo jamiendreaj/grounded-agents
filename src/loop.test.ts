@@ -106,6 +106,27 @@ test('a grave failure is reported differently from an ordinary one', async () =>
   assert.match(plain.blocked_because!, /^Guardrails blocked it/);
 });
 
+test('the sentence after the grave label is the domain\'s, not the framework\'s', async () => {
+  // It used to be hardcoded "Do not send. This needs a person.", which is
+  // right for a draft reply and wrong for an agent that extracts fields from
+  // a document — there is no reply to withhold. A framework that assumes its
+  // own first use case puts that assumption in front of the user.
+  const dflt = await go([{ text: 'The price is €999,999.' }]);
+  assert.match(dflt.blocked_because!, /This needs a person\.$/);
+
+  const extractor = defineAgent<Doc, Record<string, never>>({
+    ...agent,
+    name: 'extractor',
+    graveLabel: 'DO NOT USE',
+    graveAdvice: 'The evidence for this field is not in the document.',
+  });
+  const r = await run(extractor, {
+    document, input: 'q', client: fakeClient([{ text: 'The price is €999,999.' }]),
+  });
+  assert.match(r.blocked_because!, /^DO NOT USE — unauthorised_price\. The evidence for this field is not in the document\.$/);
+  assert.equal(r.grave, true, 'a custom label must still be recognised as grave');
+});
+
 /* ── the loop ─────────────────────────────────────────────────────────── */
 
 test('a clean draft is sendable', async () => {

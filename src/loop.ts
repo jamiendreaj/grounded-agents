@@ -40,6 +40,7 @@ export const DEFAULT_TOKEN_BUDGET = 60_000;
  *   guards                              -> rules run on the finished draft
  *   grave                               -> rule names reported differently
  *   graveLabel                          -> what to call them
+ *   graveAdvice                         -> the sentence that follows the label
  *
  * `grave` exists because not every failure is the same kind of failure. A
  * price typo and an unlawful statement both block a draft, and treating them
@@ -56,6 +57,16 @@ export type AgentDefinition<Doc = any, Cfg = any> = {
   /** Rule names whose failure is a different KIND of failure. */
   grave?: readonly string[];
   graveLabel?: string;
+  /**
+   * The sentence after the label.
+   *
+   * It used to be the hardcoded "Do not send. This needs a person.", which is
+   * right for a draft reply and wrong for anything else — the second agent
+   * built on this framework extracts fields from a contract, and there is no
+   * reply to withhold. A framework that assumes its own first use case puts
+   * that assumption in front of the user.
+   */
+  graveAdvice?: string;
   model?: string;
   maxTokens?: number;
   maxTurns?: number;
@@ -76,6 +87,7 @@ export function defineAgent<Doc = any, Cfg = any>({
   guards = [],
   grave = [],
   graveLabel = 'SERIOUS',
+  graveAdvice = 'This needs a person.',
   model = DEFAULT_MODEL,
   maxTokens = DEFAULT_MAX_TOKENS,
   maxTurns = DEFAULT_MAX_TURNS,
@@ -84,7 +96,7 @@ export function defineAgent<Doc = any, Cfg = any>({
 }: AgentDefinition<Doc, Cfg>): Agent<Doc, Cfg> {
   if (!name) throw new Error('An agent needs a name.');
   if (typeof prompt !== 'function') throw new Error(`Agent "${name}" needs a prompt(document, config) function.`);
-  return { name, prompt, tools, runTool, guards, grave, graveLabel, model, maxTokens, maxTurns, tokenBudget, validate };
+  return { name, prompt, tools, runTool, guards, grave, graveLabel, graveAdvice, model, maxTokens, maxTurns, tokenBudget, validate };
 }
 
 /** Why a draft cannot be sent. Null when it can. */
@@ -103,7 +115,7 @@ function blockedBecause(
   if (!verdict.ok) {
     const grave = verdict.blocked.filter((r) => agent.grave.includes(r));
     return grave.length
-      ? `${agent.graveLabel} — ${grave.join(', ')}. Do not send. This needs a person.`
+      ? `${agent.graveLabel} — ${grave.join(', ')}. ${agent.graveAdvice}`
       : `Guardrails blocked it: ${verdict.blocked.join(', ')}.`;
   }
   return null;
