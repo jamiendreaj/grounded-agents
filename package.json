@@ -25,9 +25,9 @@
   ],
   "scripts": {
     "build": "tsc -p tsconfig.json",
+    "prepare": "npm run build",
     "typecheck": "tsc --noEmit -p tsconfig.json",
     "test": "tsc -p tsconfig.test.json && ls dist-test/*.test.js >/dev/null && node --test dist-test/*.test.js",
-    "prepublishOnly": "npm run build",
     "typecheck:example": "tsc -p examples/tsconfig.json"
   },
   "dependencies": {
