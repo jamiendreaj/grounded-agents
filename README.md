@@ -53,6 +53,7 @@ const agent = defineAgent<Listing, BranchConfig>({
   // Not every failure is the same KIND of failure.
   grave: ['protected_characteristic', 'steering'],
   graveLabel: 'RULE ZERO',
+  graveAdvice: 'This needs a person before anything goes out.',
 });
 
 const result = await run(agent, { document: listing, input: enquiry });
@@ -183,6 +184,16 @@ extracted from agents that already worked, so the only honest test of it is
 whether one of them can be expressed in it without the shape bending.
 
 ---
+
+## Built on this
+
+- [document-extraction-agent](https://github.com/jamiendreaj/document-extraction-agent) — contract fields, where a span that is not in the document is deleted
+
+Building that one is what the extraction was for, and it immediately found an
+assumption baked into this package: the sentence after the grave label was
+hardcoded to "Do not send. This needs a person." An agent that reads fields out
+of a contract has no reply to withhold, so `graveAdvice` is now the domain's to
+write.
 
 ## The agents it was extracted from
 
